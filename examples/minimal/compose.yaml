@@ -1,0 +1,36 @@
+name: spagbol-example
+x-development: &development
+  build: .
+  init: true
+  volumes:
+    - .:/workspace/spagbol-client
+    - ../..:/workspace/spagbol
+    - client-modules:/workspace/spagbol-client/node_modules
+    - library-modules:/workspace/spagbol/node_modules
+    - npm-cache:/root/.npm
+services:
+  prepare:
+    <<: *development
+    command: ["node", "scripts/prepare.mjs"]
+  library:
+    <<: *development
+    depends_on:
+      prepare:
+        condition: service_completed_successfully
+    working_dir: /workspace/spagbol
+    command: ["npm", "run", "dev"]
+  client:
+    <<: *development
+    depends_on:
+      prepare:
+        condition: service_completed_successfully
+    command: ["npm", "run", "dev"]
+    ports:
+      - "${SPAGBOL_PORT:-5187}:5173"
+    environment:
+      SPAGBOL_SOURCE: /workspace/spagbol
+      CHOKIDAR_USEPOLLING: "true"
+volumes:
+  client-modules:
+  library-modules:
+  npm-cache:

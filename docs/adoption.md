@@ -1,0 +1,11 @@
+# Complete editor adoption
+
+Teia now mounts one `SpagbolCanvas` backed by `GraphEditor` in both standalone and hosted modes. Its old canvas state/history, graph keyboard/connection/duplication handlers, node frame renderer and cable renderer are removed. The independent example uses the same complete canvas.
+
+Spagbol owns frames/ports, links and selected-link controls, history/selection, clipboard and duplication, areas, grouping with Group/Ins/Outs, nesting and projected instance controls. Teia registers DSP node content and specialized parameter widgets, supplies patch codecs, and binds runtime observations, assets, persistence, hosted gestures and FM-1 capabilities. Area owners and atomic domain normalization preserve runtime containers. Domain parameter-port metadata changes use shared selection/history commands. Creation/type menus respect host/FM-1 capability filters without discarding unsupported nodes. Virtual Send/Receive relations are presentation-only shared links.
+
+Validation includes Docker compilation, shared model/control checks, and all saved Teia patch fixtures round-tripping and producing equivalent static DSP programs after a canonical graph edit. This does not establish browser/audio/native-host/hardware parity. After installing the updated packed package, exercise ordinary nodes and specialized controls; node type changes; connection/strength/reconnection; duplicate and undo; runtime containers; Group/Ins/Outs and UI-area instance controls; MIDI; persistence; hosted sessions; and FM-1 export/live editing.
+
+visual-visual remains reference-only and unchanged. No package has been published or application deployed.
+
+Teia-specific compatibility includes display resize/scale, compact labels, area hierarchy previews and inline titles, modifier-delete bridging, Params temporary pins, per-row Sequencer ports, recorded-buffer copy callbacks and asynchronous Buffer-to-Sample conversion. These bind through shared commands/view slots/lifecycle hooks; none reintroduces a Teia canvas or second graph history. Group UI areas retain their explicit crop bounds and plain resettable headers.

@@ -1,0 +1,123 @@
+.spagbol-canvas .spagbol-canvas-link-controls {
+  position: fixed;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-foreground, var(--spagbol-foreground, #fff));
+  background:
+    linear-gradient(var(--color-foreground, var(--spagbol-foreground, #fff)), var(--color-foreground, var(--spagbol-foreground, #fff))) left top / 100% 4px no-repeat,
+    linear-gradient(var(--color-foreground, var(--spagbol-foreground, #fff)), var(--color-foreground, var(--spagbol-foreground, #fff))) left bottom / 100% 4px no-repeat,
+    linear-gradient(var(--color-foreground, var(--spagbol-foreground, #fff)), var(--color-foreground, var(--spagbol-foreground, #fff))) left top / 4px 100% no-repeat,
+    linear-gradient(var(--color-foreground, var(--spagbol-foreground, #fff)), var(--color-foreground, var(--spagbol-foreground, #fff))) right top / 4px 100% no-repeat,
+    linear-gradient(var(--color-foreground, var(--spagbol-foreground, #fff)), var(--color-foreground, var(--spagbol-foreground, #fff))) left 26px / 100% 4px no-repeat;
+  color: var(--color-background, var(--spagbol-bg, #000));
+  font-size: 13px;
+  font-weight: 400;
+  pointer-events: all;
+  box-shadow: 6px 6px 0 var(--color-background-42, #0000006b);
+  transform-origin: center;
+  --edge-control-width: 96px;
+  --edge-weight-control-width: 74px;
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-value-row {
+  display: flex;
+  gap: 0;
+}
+
+.spagbol-canvas .spagbol-control-number-link {
+  width: var(--edge-weight-control-width);
+  height: 22px;
+  padding: 0 4px;
+  border: 0;
+  background: var(--color-surface, var(--spagbol-surface, #000));
+  color: var(--color-foreground, var(--spagbol-foreground, #fff));
+  cursor: ns-resize;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.spagbol-canvas .spagbol-control-number-link:focus {
+  outline: 1px solid var(--color-foreground, var(--spagbol-foreground, #fff));
+  outline-offset: 1px;
+}
+
+.spagbol-canvas .spagbol-control-number-link-editing {
+  display: block;
+  background: var(--color-surface, var(--spagbol-surface, #000));
+  color: var(--color-foreground, var(--spagbol-foreground, #fff));
+  cursor: text;
+  font-size: 13px;
+  font-weight: 400;
+  user-select: text;
+  -moz-appearance: textfield;
+}
+
+.spagbol-canvas .spagbol-control-number-link-editing::selection {
+  background: var(--color-foreground, var(--spagbol-foreground, #fff));
+  color: var(--color-background, var(--spagbol-bg, #000));
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-enabled {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-surface, var(--spagbol-surface, #000));
+  cursor: pointer;
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-enabled::after {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--color-foreground, var(--spagbol-foreground, #fff));
+  border-radius: 50%;
+  content: '';
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-enabled-active::after {
+  background: var(--color-foreground, var(--spagbol-foreground, #fff));
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-enabled:hover {
+  background: var(--color-surface, var(--spagbol-surface, #000));
+  color: var(--color-foreground, var(--spagbol-foreground, #fff));
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-enabled:focus-visible {
+  outline: 1px solid var(--color-foreground, var(--spagbol-foreground, #fff));
+  outline-offset: 2px;
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-mode {
+  width: var(--edge-control-width);
+  height: 22px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-surface, var(--spagbol-surface, #000));
+  color: var(--color-foreground, var(--spagbol-foreground, #fff));
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.spagbol-canvas .spagbol-canvas-link-controls-mode:focus {
+  outline: 1px solid var(--color-foreground, var(--spagbol-foreground, #fff));
+  outline-offset: 1px;
+}
+

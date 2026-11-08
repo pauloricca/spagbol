@@ -1,0 +1,122 @@
+/* Teia's original controls. Existing Teia tokens take precedence; Spagbol
+   tokens/defaults allow the same controls in other consumers and outside a canvas. */
+.spagbol-control-slider,
+.spagbol-control-button {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 156px;
+}
+
+.spagbol-control-slider {
+  position: relative;
+  height: var(--node-display-height, 48px);
+  background: transparent;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.spagbol-control-button {
+  height: var(--node-display-height, 48px);
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.spagbol-control-button:hover,
+.spagbol-control-button:focus-visible {
+  background: var(--color-foreground-08, rgba(255, 255, 255, 0.08));
+  color: var(--color-foreground, var(--spagbol-foreground, #fff));
+  outline: 0;
+}
+
+.spagbol-control-button-active {
+  background: var(--color-accent, var(--spagbol-accent, #2fd061));
+  color: var(--color-background, var(--spagbol-bg, #000));
+}
+
+.spagbol-control-button-active:hover,
+.spagbol-control-button-active:focus-visible {
+  background: var(--color-accent, var(--spagbol-accent, #2fd061));
+  color: var(--color-background, var(--spagbol-bg, #000));
+}
+
+.spagbol-control-slider-fill {
+  position: absolute;
+  inset: auto auto 0 0;
+  width: 0;
+  height: 100%;
+  background: var(--color-accent, var(--spagbol-accent, #2fd061));
+  pointer-events: none;
+}
+
+.spagbol-control-slider-vertical .spagbol-control-slider-fill {
+  width: 100%;
+  height: 0;
+}
+
+.spagbol-control-slider input[type="range"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.spagbol-control-slider-vertical input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+/* Match Teia's control focus styling inside the canvas's generic button rules. */
+.spagbol-canvas button.spagbol-control-button:focus-visible {
+  outline: 0;
+}
+
+
+.spagbol-control-number {
+  width: 68px;
+  min-width: 0;
+  max-width: 68px;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--spagbol-foreground, #fff);
+  background: transparent;
+  color: var(--spagbol-foreground, #fff);
+  cursor: ns-resize;
+  line-height: 20px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.spagbol-control-number:focus {
+  outline: 1px solid var(--spagbol-foreground, #fff);
+  outline-offset: 1px;
+}
+
+.spagbol-control-number-editing {
+  display: block;
+  appearance: textfield;
+  cursor: text;
+  font: inherit;
+  user-select: text;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.spagbol-control-number-replaced {
+  border-color: color-mix(in srgb, var(--spagbol-foreground, #fff) 42%, transparent);
+  color: color-mix(in srgb, var(--spagbol-foreground, #fff) 48%, var(--spagbol-bg, #000));
+}
+
+.spagbol-control-number-editing::selection {
+  background: var(--spagbol-foreground, #fff);
+  color: var(--spagbol-bg, #000);
+}
+

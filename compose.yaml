@@ -1,0 +1,27 @@
+name: spagbol
+services:
+  spagbol:
+    build: .
+    init: true
+    working_dir: /workspace/spagbol
+    command:
+      [
+        "sh",
+        "-c",
+        "npm ci --ignore-scripts --no-audit --no-fund && npm run dev",
+      ]
+    volumes:
+      - .:/workspace/spagbol
+      - spagbol-modules:/workspace/spagbol/node_modules
+    stop_grace_period: 5s
+  check:
+    build: .
+    init: true
+    profiles: ["tools"]
+    command: ["npm", "test"]
+    volumes:
+      - .:/workspace/spagbol
+      - check-modules:/workspace/spagbol/node_modules
+volumes:
+  spagbol-modules:
+  check-modules:
