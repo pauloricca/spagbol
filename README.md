@@ -8,7 +8,7 @@ Spagbol owns graph editing and presentation. Consumers own their node catalogues
 
 `@pauloricca/spagbol` contains the complete graph model, registries, atomic edits, undo/redo, graph transformations, nesting, areas, observations and codecs together with the extensible React canvas, node frames/ports and controls. All public model and UI symbols come from the same entry point. Import `@pauloricca/spagbol/styles.css` explicitly.
 
-The package is version `0.1.0`, local and unpublished. React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
+The package is version `0.1.0`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
 
 ## Docker development
 
@@ -33,7 +33,7 @@ docker compose run --rm check npm run build
 docker compose run --rm check npm run pack:local
 ```
 
-The tarball appears in `artifacts/`. It is an ignored build output, not a published package. Both check and development containers mount this checkout; their builds update only this repository's `dist` outputs. No Docker service refers to Teia or visual-visual.
+The tarball appears in `artifacts/`. It is an ignored build output for local package testing. Both check and development containers mount this checkout; their builds update only this repository's `dist` outputs. No Docker service refers to Teia or visual-visual.
 
 ## Runnable example
 
@@ -296,7 +296,7 @@ Sliders show the requested value immediately during pointer and wheel edits, ind
 
 ## Publishing to npm
 
-The package is structured as `@pauloricca/spagbol` with JavaScript, TypeScript declarations and explicit CSS exports. Confirm that `pauloricca` is your npm username/scope. Before the first release, choose your intended license (currently `UNLICENSED`; add a matching LICENSE file if granting reuse rights), and add your real repository URL to package.json once the repository exists. Nothing has been published automatically.
+The public package is `@pauloricca/spagbol`, licensed under [MIT](LICENSE), with JavaScript, TypeScript declarations and explicit CSS exports. Its source repository is [pauloricca/spagbol](https://github.com/pauloricca/spagbol). `publishConfig` pins the public npm registry and public visibility. Publishing requires an npm account with access to the scope.
 
 From this repository root, open a release shell in Docker. Authentication stays outside the checkout in a named volume:
 
@@ -326,6 +326,6 @@ Consumers install the published release:
 npm install @pauloricca/spagbol @xyflow/react react react-dom
 ```
 
-Import `@pauloricca/spagbol/styles.css` once and mount `SpagbolCanvas` in a sized container, as above. Teia currently uses a local tarball; switching its dependency to the published version and updating its lockfile is a separate consumer change.
+Import `@pauloricca/spagbol/styles.css` once and mount `SpagbolCanvas` in a sized container, as above. Applications should declare the released npm version in their manifest and commit the registry-backed lockfile. The bundled example intentionally uses a local tarball so edits can be tested before a release.
 
 For updates, change the version first (for example `npm version patch --no-git-tag-version`), rerun the checks and dry run, then publish again. Commit the manifest/lockfile through your normal release workflow. Published name/version pairs cannot be reused. Local example preparation reads the package version to select its tarball. See [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).

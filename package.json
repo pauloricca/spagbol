@@ -22,7 +22,8 @@
   "files": [
     "dist",
     "src",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -42,5 +43,18 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
-  "license": "UNLICENSED"
+  "license": "MIT",
+  "author": "Paulo Ricca",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pauloricca/spagbol.git"
+  },
+  "homepage": "https://github.com/pauloricca/spagbol#readme",
+  "bugs": {
+    "url": "https://github.com/pauloricca/spagbol/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
