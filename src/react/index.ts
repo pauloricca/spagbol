@@ -63,3 +63,7 @@ export {
 export { SpagbolCurveEditor, type SpagbolCurveEditorProps, type SpagbolCurveEditorPoint } from "./SpagbolCurveEditor.js";
 export { SpagbolSequencer, type SpagbolSequencerProps, type SpagbolSequencerItem } from "./SpagbolSequencer.js";
 export { SpagbolControlJoystick, type SpagbolControlJoystickProps } from "./SpagbolControlJoystick.js";
+
+export { SpagbolNodePortLabel, type SpagbolNodePortLabelProps } from "./SpagbolNodePortLabel.js";
+
+export { SpagbolControlSelect, type SpagbolControlSelectProps } from "./SpagbolControlSelect.js";

@@ -12,7 +12,7 @@ Spagbol applications use numeric signal connections while retaining their own ca
 
 `@pauloricca/spagbol` contains the complete graph model, registries, atomic edits, undo/redo, graph transformations, nesting, areas, observations and codecs together with the extensible React canvas, node frames/ports and controls. All public model and UI symbols come from the same entry point. Import `@pauloricca/spagbol/styles.css` explicitly.
 
-The package is version `0.1.3`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
+The package is version `0.1.4`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
 
 ## Docker development
 
@@ -180,6 +180,8 @@ To disable strength connections, supply `policy: { linkProperties: [] }`; `featu
 Supply optional `linkPresentation` classifications for feedback/control/virtual drawing. Self links get the feedback geometry automatically. Virtual relations are display-only. Standard connected links support weights, enabling/disabling, mode editing, endpoint reconnection and insertion.
 
 ## Add-node picker
+
+Search matches node names only, ignoring case; categories, internal types and keywords do not affect the results.
 
 Double-click empty canvas to open the picker. Its heading uses the same spacing, typography and colours as a node header. The first filtered result is selected automatically; Up/Down moves the highlight while focus stays in the search field, and Enter creates the highlighted node. Typing a new query resets selection to the first result; Escape cancels. The selected result scrolls into view, and pointer movement/clicks select/create items too. With no matches, Enter does nothing. Inserting a node into a link uses the same picker.
 
@@ -367,3 +369,13 @@ Areas use Teia’s bold title, 32px aligned header, subtle background and dashed
 Areas are the umbrella for **Container**, **Spread**, **Spawn** and **Conditional Execution**. Container only organises the graph visually; the other three are execution areas with app-owned semantics. Group is a separate nested graph. The creation/type picker calls the visual kind Container, and new or cleared default titles use Container. The compatible `GraphArea`, `areas`, `ownerNodeId`, `spagbol.area` and `GraphEditor.addArea()`/`convertNodeToArea()` names stay unchanged; existing saved/custom titles are not rewritten. See [area terminology](docs/language/standard-nodes.md#areas-and-their-kinds).
 
 Version 0.1.3 includes live node-drag previews, labeled group breadcrumbs and a larger chevron navigation target, alongside the shared Curve, Sequencer and Joystick controls.
+
+Port labels and value columns are owned by `SpagbolNodeFrame`. Rows share label widths within each input/output column, so numeric controls align with the longest label. Port metadata supplies numeric defaults, bounds, steps and integer mode. `portLabelProps(port)` supplies rename/reorder callbacks and selection state without replacing the shared `SpagbolNodePortLabel`. `renderPortControl(port)` supplies specialized widgets; return `undefined` for the standard numeric editor or `null` for no editor. The older `renderPortContent` escape hatch remains available for fully custom rows. `SpagbolNodeGroupPort` remains an alias of the shared label component.
+
+Port rows retain the original Teia flex layout: the label fills the remaining width and value controls align at the right edge of each input column. Ports with `connectable: false` show their label and control without a pin. Dropdowns supplied through `renderPortControl` remain visible when `valueEditor: false` disables the default numeric editor.
+
+`SpagbolControlSelect` owns the native port dropdown styling and matches the 68px by 22px numeric editor. Consumers pass options and value/change handlers using native select props.
+
+While drawing a link, its preview uses the current link-mode color. Press `S` for set (white), `A` for add (yellow), `M` for multiply (blue), or `B` for bend (purple) to change the mode before completing the connection. Link-mode controls keep contrasting text and arrow colors on hover.
+
+Version 0.1.4 adds shared port labels and dropdowns, aligned numeric controls, hidden non-connectable pins, link-mode preview colors and keyboard focus, contrasting link-menu hover styling, and node-picker search by name.

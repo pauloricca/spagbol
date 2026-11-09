@@ -1496,6 +1496,7 @@ function SpagbolCanvasInner({
           (!editor.policy.modes || editor.policy.modes.includes(mode.id)),
       );
     if (mode && !command) {
+      event.preventDefault();
       setActiveMode(mode.id);
       if (!connecting)
         editor.edit("Change link mode", "values", (graph) => {
@@ -1513,7 +1514,7 @@ function SpagbolCanvasInner({
   const availableNodes = [...editor.nodes.list().filter(definition => !props.nodeKinds || props.nodeKinds.includes(definition.kind)), ...(features.areas && !picker?.origin && !picker?.linkId ? [{ kind: 'spagbol.area', label: 'Container', createData: () => ({}), ports: () => [] } as import('../core/index.js').NodeDefinition] : [])]
     .filter(definition => snapshot.path.length > 0 || ![spagbolGroupKinds.inputs, spagbolGroupKinds.outputs].includes(definition.kind as typeof spagbolGroupKinds.inputs))
     .filter((definition) =>
-      `${definition.label} ${definition.category ?? ""} ${definition.keywords?.join(" ") ?? ""}`
+      definition.label
         .toLowerCase()
         .includes(search.toLowerCase()),
     );
@@ -1531,6 +1532,7 @@ function SpagbolCanvasInner({
         style={
           {
             ...props.style,
+            "--spagbol-connection-color": editor.modes.get(activeMode)?.color ?? "var(--spagbol-foreground)",
             "--spagbol-title-scale": spagbolHeaderTitleScale(zoom),
             "--spagbol-canvas-height": `${editorSize.height}px`,
           } as CSSProperties
@@ -1685,6 +1687,7 @@ function SpagbolCanvasInner({
             editor.commitGesture();
           }}
           onConnectStart={(_event, params) => {
+            root.current?.focus({ preventScroll: true });
             setRevealedNodeId(params.nodeId?.startsWith("node:") ? params.nodeId.slice(5) : null);
             connection.current = params;
             connectionDone.current = false;

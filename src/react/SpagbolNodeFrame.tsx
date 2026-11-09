@@ -1,3 +1,4 @@
+import { SpagbolNodePortLabel, type SpagbolNodePortLabelProps } from "./SpagbolNodePortLabel.js";
 import { graphPortStates, emptyPortState } from "./portState.js";
 import { SpagbolNodeGroupPortAdd } from "./SpagbolNodeGroupPortAdd.js";
 import { SpagbolNodeGroupPort } from "./SpagbolNodeGroupPort.js";
@@ -49,6 +50,8 @@ export function SpagbolNodePort({ port, connectable = true, style, position, cla
       ? link.source.nodeId === nodeId && link.source.portId === port.id
       : link.target.type === 'port' && link.target.nodeId === nodeId && link.target.portId === port.id);
   });
+  // Non-connectable parameters still have labels and controls, but no visible pin.
+  if (port.connectable === false) return null;
   const direction = port.direction;
   return (
     <Handle
@@ -57,7 +60,7 @@ export function SpagbolNodePort({ port, connectable = true, style, position, cla
       position={position ?? (direction === "input" ? Position.Left : Position.Right)}
       className={`spagbol-node-port${reconnecting ? ' spagbol-node-port-selected-link' : ''} ${className ?? ""}`}
       isConnectable={
-        mode === "edit" && port.connectable !== false && connectable
+        mode === "edit" && connectable
       }
       style={style}
       aria-label={`${port.label} ${direction}`}
@@ -76,6 +79,10 @@ export interface SpagbolNodeFrameProps extends SpagbolNodeViewProps {
   style?: CSSProperties;
   /** Domain widgets inside a shared port row. The canvas owns handles and gestures. */
   renderPortContent?(port: PortDefinition): ReactNode;
+  /** Label interaction metadata; the frame owns rendering and alignment. */
+  portLabelProps?(port: PortDefinition): Partial<SpagbolNodePortLabelProps>;
+  /** Domain-specific value widget. Undefined uses the standard numeric editor; null hides it. */
+  renderPortControl?(port: PortDefinition): ReactNode;
   portExtras?: ReactNode;
   portsHeader?: ReactNode;
   forceCompact?: boolean;
@@ -134,6 +141,7 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
   }
   function row(port: PortDefinition, index: number) {
     const input = port.direction === "input";
+    const control = props.renderPortControl?.(port);
     return (
       <div
         className={`spagbol-node-port-row spagbol-node-port-row-${port.direction}`}
@@ -142,15 +150,15 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
         style={{ gridColumn: boundary || input || inputPorts.length === 0 ? 1 : 2, gridRow: index + 1 + (props.portsHeader ? 1 : 0) }}
       >
         {!projected && !props.hidePorts && <SpagbolNodePort port={port} />}
-        {props.renderPortContent ? props.renderPortContent(port) : <>{boundary && !projected ? <SpagbolNodeGroupPort name={port.label} editable={editor.editing && !props.readOnly} draggable={editor.editing && !props.readOnly} selected={selectedPortId === port.id} onChange={label => { try { editor.renameBoundaryPort(node.id, port.id, label); } catch { /* Keep the valid label. */ } }} onPointerDown={event => {
+        {props.renderPortContent ? props.renderPortContent(port) : <>{props.portLabelProps ? <SpagbolNodePortLabel name={port.label} editable={false} onChange={() => undefined} {...props.portLabelProps(port)} /> : boundary && !projected ? <SpagbolNodeGroupPort name={port.label} editable={editor.editing && !props.readOnly} draggable={editor.editing && !props.readOnly} selected={selectedPortId === port.id} onChange={label => { try { editor.renameBoundaryPort(node.id, port.id, label); } catch { /* Keep the valid label. */ } }} onPointerDown={event => {
           if (!editor.editing || props.readOnly || event.button !== 0) return;
           event.preventDefault(); event.stopPropagation();
           editor.select({ nodeIds: [node.id], port: { nodeId: node.id, portId: port.id, direction: port.direction } });
           editor.beginGesture('Reorder group ports');
           reorder.current = { pointer: event.pointerId, portId: port.id, element: event.currentTarget };
           event.currentTarget.setPointerCapture(event.pointerId);
-        }} /> : <span className="spagbol-node-port-name" title={port.label}>{port.label}</span>}
-        {((input && node.kind !== spagbolGroupKinds.outputs) || node.kind === spagbolGroupKinds.inputs) && port.valueEditor !== false && (
+        }} /> : <SpagbolNodePortLabel name={port.label} editable={false} onChange={() => undefined} />}
+        <div className="spagbol-node-port-control">{control !== undefined ? control : ((input && node.kind !== spagbolGroupKinds.outputs) || node.kind === spagbolGroupKinds.inputs) && port.valueEditor !== false && (
           <SpagbolControlNumber
             value={node.values[port.id] ?? port.defaultValue ?? 0}
             onChange={(value) => props.setValue(port.id, value)}
@@ -164,7 +172,7 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
             onGestureStart={() => props.beginGesture(`Change ${port.label}`)}
             onGestureEnd={(cancel) => props.endGesture(cancel)}
           />
-        )}</>}
+        )}</div></>}
       </div>
     );
   }

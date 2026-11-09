@@ -64,7 +64,7 @@
   --xy-edge-stroke: var(--spagbol-foreground);
   --xy-selection-background-color: #b9df6820;
   --xy-selection-border: 1px solid var(--spagbol-accent);
-  --xy-connectionline-stroke: var(--spagbol-accent);
+  --xy-connectionline-stroke: var(--spagbol-connection-color, var(--spagbol-foreground));
 }
 /* Preserve Teia's individual selection styling without a group rectangle. */
 .spagbol-canvas .react-flow__nodesselection-rect {
@@ -182,7 +182,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   padding: 0 8px;
   min-height: 26px;
   min-width: 0;
@@ -742,39 +742,39 @@
 .spagbol-node-frame-ports-boundary { grid-template-columns: minmax(0, 1fr); }
 .spagbol-node-group-port-add { min-height: 26px; padding: 0 8px; }
 .spagbol-node-group-port-add-editor { width: 100%; background: var(--spagbol-bg); color: var(--spagbol-foreground); border: 1px solid var(--spagbol-border); }
-.spagbol-node-group-port {
+.spagbol-node-port-label {
   user-select: none;
   -webkit-user-select: none;
 }
 
-.spagbol-node-group-port-editable {
+.spagbol-node-port-label-editable {
   cursor: grab;
 }
 
-.spagbol-node-group-port-editable:focus {
+.spagbol-node-port-label-editable:focus {
   outline: 1px solid var(--spagbol-foreground);
   outline-offset: 2px;
 }
 
-.spagbol-node-group-port-draggable:active {
+.spagbol-node-port-label-draggable:active {
   cursor: grabbing;
 }
 
-.spagbol-node-group-port-drag-target {
+.spagbol-node-port-label-drag-target {
   outline: 1px dashed var(--spagbol-foreground);
   outline-offset: 2px;
 }
 
-.spagbol-node-group-port-drag-source {
+.spagbol-node-port-label-drag-source {
   opacity: 0.58;
 }
 
-.spagbol-node-group-port-selected {
+.spagbol-node-port-label-selected {
   outline: 1px solid var(--spagbol-foreground);
   outline-offset: 2px;
 }
 
-.spagbol-node-group-port-preview {
+.spagbol-node-port-label-preview {
   font-style: italic;
 }
 
@@ -794,7 +794,7 @@
   opacity: 0.8;
 }
 
-.spagbol-node-group-port-editor {
+.spagbol-node-port-label-editor {
   width: max(7ch, 100%);
   min-width: max-content;
   height: 22px;
@@ -817,3 +817,21 @@
 .spagbol-node-frame-enter svg { display: block; flex: none; }
 .spagbol-node-frame-enter + .spagbol-node-frame-enabled { margin-left: 0; }
 .spagbol-node-frame-enter:hover { background: var(--spagbol-bg); color: var(--spagbol-foreground); }
+
+.spagbol-node-port-label { flex: 1; min-width: max-content; white-space: nowrap; }
+
+.spagbol-node-port-control { display: flex; align-items: center; gap: 6px; min-width: 0; flex: none; }
+.spagbol-node-port-control > * { flex-shrink: 0; }
+
+.spagbol-control-select {
+  width: 68px;
+  min-width: 0;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--spagbol-border);
+  border-radius: 0;
+  background: var(--spagbol-bg);
+  color: var(--spagbol-foreground);
+  font: inherit;
+  line-height: 20px;
+}
