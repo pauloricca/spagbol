@@ -14,7 +14,7 @@ export function SpagbolNodeFrameTypePicker({ node, compact, selected, disabled }
   const [highlight, setHighlight] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const menu = useRef<HTMLDivElement>(null);
-  const options = useMemo(() => [...editor.nodes.list().filter(item => !nodeKinds || nodeKinds.includes(item.kind)), ...(features.areas ? [{ kind: 'spagbol.area', label: 'Area' }] : [])].filter(item =>
+  const options = useMemo(() => [...editor.nodes.list().filter(item => !nodeKinds || nodeKinds.includes(item.kind)), ...(features.areas ? [{ kind: 'spagbol.area', label: 'Container' }] : [])].filter(item =>
     `${item.kind} ${item.label}`.toLowerCase().includes(query.trim().toLowerCase())
   ).sort((a, b) => Number(b.label.toLowerCase().startsWith(query.toLowerCase())) - Number(a.label.toLowerCase().startsWith(query.toLowerCase()))), [editor, query, nodeKinds, features.areas]);
   useEffect(() => { if (!selected || disabled) setOpen(false); }, [selected, disabled]);

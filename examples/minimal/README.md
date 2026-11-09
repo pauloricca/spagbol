@@ -42,3 +42,5 @@ docker compose run --rm --no-deps client node scripts/check-packages.mjs
 These commands prepare dependencies, compile TypeScript/build static assets and verify the installed public package; they do not launch the app. No source aliases bypass the package boundary. Docker/package preparation code lives in `scripts/`, separately from the example application.
 
 Shared React components and CSS classes follow the same hierarchy: `SpagbolControlSlider` / `spagbol-control-slider`, `SpagbolControlButton` / `spagbol-control-button`, and `SpagbolCanvas` / `spagbol-canvas`. Node bodies have no default padding; add padding inside your own body component when needed.
+
+The packed 0.1.2 package also exports `SpagbolCurveEditor`, `SpagbolSequencer` and `SpagbolControlJoystick`. See the [controlled editor integration guide](../../docs/language/ui-components.md) for view props and host-owned edit adapters. They do not install node definitions or define saved curve/sequence formats.

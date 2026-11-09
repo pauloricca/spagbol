@@ -1,3 +1,4 @@
+@import "./editors.css";
 @import "./link-controls.css";
 @import "./controls.css";
 @import "@xyflow/react/dist/style.css";
@@ -19,6 +20,7 @@
   --spagbol-control: rgba(0, 0, 0, 0.62);
   --spagbol-link-underlay: #0b0b0b;
   --spagbol-control-size: 28px;
+  --spagbol-pin-size: 8px;
   --spagbol-font:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     monospace;
@@ -81,6 +83,17 @@
 .spagbol-canvas .react-flow__edgeupdater { fill: transparent; stroke: transparent; stroke-width: 0; cursor: grab; pointer-events: all; }
 .spagbol-canvas .react-flow__edgeupdater-source { transform: translateX(-12px); }
 .spagbol-canvas .react-flow__edgeupdater-target { transform: translateX(12px); }
+/* Match Teia's square pins; selected endpoints only change colour. */
+.spagbol-canvas .react-flow__handle.spagbol-node-port,
+.spagbol-canvas .react-flow__handle.spagbol-property-port {
+  width: var(--spagbol-pin-size);
+  height: var(--spagbol-pin-size);
+  min-width: var(--spagbol-pin-size);
+  min-height: var(--spagbol-pin-size);
+  border: 1px solid var(--spagbol-foreground);
+  border-radius: 0;
+  background: var(--spagbol-control);
+}
 .spagbol-canvas .spagbol-node-port.spagbol-node-port-selected-link { background: var(--spagbol-accent); border-color: var(--spagbol-accent); box-shadow: 0 0 0 2px var(--spagbol-link-underlay); pointer-events: none; }
 .spagbol-canvas-link-overlay { position: absolute; inset: 0; z-index: 25; pointer-events: none; }
 
@@ -124,7 +137,8 @@
   opacity: 0.48;
   border-style: dashed;
 }
-.spagbol-node-frame-header {
+.spagbol-node-frame-header,
+.spagbol-canvas-picker-heading {
   min-height: 31px;
   padding: 4px 8px;
   border-bottom: 1px solid var(--spagbol-border);
@@ -136,7 +150,8 @@
   cursor: grab;
   user-select: none;
 }
-.spagbol-node-frame-title {
+.spagbol-node-frame-title,
+.spagbol-canvas-picker-title {
   flex: 1;
   min-width: 0;
   overflow: visible;
@@ -145,7 +160,8 @@
   font-size: calc(13px * var(--spagbol-title-scale, 1));
   font-weight: 700;
 }
-.spagbol-canvas .spagbol-node-frame-header-button {
+.spagbol-canvas .spagbol-node-frame-header-button,
+.spagbol-canvas .spagbol-canvas-picker-heading button {
   border: 0;
   background: transparent;
   color: inherit;
@@ -220,11 +236,11 @@
   height: 1px;
   pointer-events: none;
 }
-.spagbol-canvas .spagbol-property-port {
+.spagbol-canvas .react-flow__handle.spagbol-property-port {
   top: 0;
   left: 0;
-  width: 9px;
-  height: 9px;
+  width: var(--spagbol-pin-size);
+  height: var(--spagbol-pin-size);
   border: 1px solid var(--spagbol-accent);
   background: var(--spagbol-bg);
   pointer-events: auto;
@@ -232,11 +248,17 @@
 .spagbol-canvas-area {
   position: relative;
   border: 1px solid var(--spagbol-border);
-  background: #ffffff03;
+  background:
+    linear-gradient(color-mix(in srgb, var(--spagbol-foreground) 8%, transparent), color-mix(in srgb, var(--spagbol-foreground) 8%, transparent)),
+    color-mix(in srgb, var(--spagbol-bg) 42%, transparent);
   pointer-events: none;
 }
 .spagbol-canvas-area-selected {
-  border-color: var(--spagbol-accent);
+  outline: 1px dashed var(--spagbol-foreground);
+  outline-offset: 3px;
+}
+.spagbol-canvas-area-collapsed {
+  overflow: hidden;
 }
 .spagbol-canvas-area-header {
   position: absolute;
@@ -244,29 +266,84 @@
   left: 0;
   right: 0;
   height: 32px;
-  padding: 5px 10px;
-  background: var(--spagbol-surface-raised);
-  color: var(--spagbol-muted);
   display: flex;
-  justify-content: space-between;
-  cursor: move;
+  align-items: center;
+  padding: 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--spagbol-foreground) 28%, transparent);
+  color: var(--spagbol-foreground);
+  cursor: grab;
   pointer-events: auto;
   user-select: none;
   touch-action: none;
 }
-.spagbol-canvas-area-header > span {
+.spagbol-canvas-area-header:active { cursor: grabbing; }
+.spagbol-canvas-area-title,
+.spagbol-canvas-area-title-input {
   flex: 1;
-  font-size: calc(11px * var(--spagbol-title-scale, 1));
+  min-width: 0;
+  max-width: 100%;
+  border: 0;
+  padding: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--spagbol-foreground);
+  font: inherit;
+  font-size: calc(13px * var(--spagbol-title-scale, 1));
+  font-weight: 700;
 }
+.spagbol-canvas-area-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+.spagbol-canvas-area-title-input { width: auto; min-width: 4ch; }
 .spagbol-canvas-area-actions {
   display: flex;
-  gap: 8px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
 }
-.spagbol-canvas-area-actions button {
-  border: none;
+.spagbol-canvas .spagbol-canvas-area-actions button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
   background: transparent;
-  padding: 0 2px;
+  color: currentColor;
+  cursor: pointer;
 }
+.spagbol-canvas .spagbol-canvas-area-actions button:hover,
+.spagbol-canvas .spagbol-canvas-area-actions button:focus-visible {
+  background: var(--spagbol-bg);
+  color: var(--spagbol-foreground);
+  outline: 0;
+}
+.spagbol-canvas-area-lock-icon {
+  position: relative;
+  display: block;
+  width: 10px;
+  height: 8px;
+  border: 1px solid currentColor;
+}
+.spagbol-canvas-area-lock-icon::before {
+  position: absolute;
+  bottom: 7px;
+  left: 1px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-bottom: 0;
+  border-radius: 5px 5px 0 0;
+  content: '';
+}
+.spagbol-canvas-area-lock:not([aria-pressed="true"]) .spagbol-canvas-area-lock-icon::before { left: 6px; }
+.spagbol-canvas-area-lock[aria-pressed="true"] .spagbol-canvas-area-lock-icon { background: currentColor; }
 .spagbol-canvas-area-resize {
   position: absolute;
   bottom: 0;
@@ -426,10 +503,10 @@
   gap: 8px;
   text-align: left;
 }
-.spagbol-canvas-menu-check {
-  display: inline-block;
-  width: 12px;
-  flex-shrink: 0;
+.spagbol-canvas-menu-items > button[aria-checked="true"],
+.spagbol-canvas-actions > button[aria-pressed="true"] {
+  background: var(--spagbol-header);
+  color: var(--spagbol-header-text);
 }
 .spagbol-canvas-menu-separator {
   height: 1px;
@@ -472,19 +549,7 @@
   box-shadow: 0 10px 40px #0007;
 }
 .spagbol-canvas-picker-heading {
-  padding: 9px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--spagbol-header);
-  color: var(--spagbol-header-text);
-}
-.spagbol-canvas-picker-heading button {
-  border: 0;
-  background: none;
-  color: inherit;
-  font-size: 18px;
-  line-height: 16px;
+  cursor: default;
 }
 .spagbol-canvas-picker input {
   margin: 8px;
@@ -509,9 +574,12 @@
   border: 0;
   background: transparent;
 }
-.spagbol-canvas-picker-list button:hover {
-  background: var(--spagbol-surface-raised);
-  color: var(--spagbol-accent);
+.spagbol-canvas-picker-list button[aria-selected="true"] {
+  background: var(--spagbol-header);
+  color: var(--spagbol-header-text);
+}
+.spagbol-canvas-picker-list button[aria-selected="true"] small {
+  color: inherit;
 }
 .spagbol-canvas-picker-list small {
   color: var(--spagbol-muted);
@@ -739,10 +807,13 @@
 }
 
 
-.spagbol-canvas-area-title, .spagbol-canvas-area-title-input { flex: 1; min-width: 0; }
-.spagbol-canvas-area-title-input { border: 0; padding: 0; color: inherit; background: transparent; font: inherit; outline: none; }
 
 .spagbol-node-frame-projected > .spagbol-node-frame-header { background: var(--spagbol-bg); color: var(--spagbol-foreground); cursor: pointer; }
 .spagbol-node-panel { border-bottom: 1px dashed var(--spagbol-foreground); background: var(--spagbol-bg); }
 
 .spagbol-node-frame-auto-compact { min-width: 0; }
+
+.spagbol-canvas .spagbol-node-frame-enter { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; width: 30px; height: 30px; padding: 0; cursor: pointer; }
+.spagbol-node-frame-enter svg { display: block; flex: none; }
+.spagbol-node-frame-enter + .spagbol-node-frame-enabled { margin-left: 0; }
+.spagbol-node-frame-enter:hover { background: var(--spagbol-bg); color: var(--spagbol-foreground); }

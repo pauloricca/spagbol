@@ -66,9 +66,10 @@ export interface GraphLink {
   enabled?: boolean;
   data?: NodeData;
 }
+/** Shared area structure: plain visual Containers or application-owned execution areas. */
 export interface GraphArea {
   id: string;
-  /** A domain node whose UI/layout is owned by this area. */
+  /** Optional owner supplies execution-area behaviour; no owner means a visual Container. */
   ownerNodeId?: string;
   title: string;
   position: Point;

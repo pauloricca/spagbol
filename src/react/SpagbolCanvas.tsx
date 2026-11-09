@@ -1,8 +1,10 @@
+import { SPAGBOL_ZOOM_BASELINE, spagbolHeaderTitleScale } from "./zoom.js";
 import { previewNodePositions, applyNodePositions } from "./nodeDrag.js";
 import { createPortal } from "react-dom";
 import { SpagbolCanvasLinkControls } from "./SpagbolCanvasLinkControls.js";
 import { SpagbolCanvasFlow } from "./SpagbolCanvasFlow.js";
 import {
+  applyNodeChanges,
   BaseEdge,
   ConnectionLineType,
   EdgeLabelRenderer,
@@ -147,6 +149,7 @@ export interface SpagbolCanvasProps extends SpagbolCanvasSlots {
   controls?: SpagbolCanvasControlsOptions | false;
   ariaLabel?: string;
 }
+const defaultGraphViewport = { x: 0, y: 0, zoom: SPAGBOL_ZOOM_BASELINE };
 const emptyFlowNodes: FlowNode[] = [];
 const emptyViews: Readonly<Record<string, SpagbolNodeView>> = Object.freeze({});
 const emptyPresentations: Readonly<Record<string, SpagbolLinkPresentation>> =
@@ -342,20 +345,31 @@ function SpagbolCanvasArea({ data, selected }: NodeProps<FlowNode>) {
         onPointerDown={(event) => start(event)}
         {...pointerHandlers}
       >
-        {titleEditing ? <input autoFocus className="spagbol-canvas-area-title-input nodrag nopan" aria-label="Area title" value={titleDraft} onFocus={event => event.currentTarget.select()} onChange={event => setTitleDraft(event.currentTarget.value)} onPointerDown={event => event.stopPropagation()} onBlur={() => { editor.updateArea(area.id, { title: titleDraft.trim() || 'Area' }); setTitleEditing(false); }} onKeyDown={event => { event.stopPropagation(); if (event.key === 'Enter') event.currentTarget.blur(); if (event.key === 'Escape') { setTitleDraft(area.title); setTitleEditing(false); } }} /> : <span className="spagbol-canvas-area-title" onDoubleClick={event => { event.stopPropagation(); if (editor.editing) { setTitleDraft(area.title); setTitleEditing(true); } }}>{area.title}</span>}
+        {titleEditing ? <input autoFocus className="spagbol-canvas-area-title-input nodrag nopan" aria-label="Area title" value={titleDraft} onFocus={event => event.currentTarget.select()} onChange={event => setTitleDraft(event.currentTarget.value)} onPointerDown={event => event.stopPropagation()} onBlur={() => { editor.updateArea(area.id, { title: titleDraft.trim() || 'Container' }); setTitleEditing(false); }} onKeyDown={event => { event.stopPropagation(); if (event.key === 'Enter') event.currentTarget.blur(); if (event.key === 'Escape') { setTitleDraft(area.title); setTitleEditing(false); } }} /> : <span className="spagbol-canvas-area-title" onDoubleClick={event => { event.stopPropagation(); if (editor.editing) { setTitleDraft(area.title); setTitleEditing(true); } }}>{area.title}</span>}
         <div
           className="spagbol-canvas-area-actions"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button
-            title={area.locked ? "Unlock membership" : "Lock membership"}
-            aria-label={area.locked ? "Unlock membership" : "Lock membership"}
+            type="button"
+            className="spagbol-canvas-area-lock"
+            title={area.locked ? "Unlock area membership" : "Lock area membership"}
+            aria-label={area.locked ? "Unlock area membership" : "Lock area membership"}
+            aria-pressed={area.locked === true}
             disabled={!editor.editing}
-            onClick={() => editor.lockArea(area.id, !area.locked)}
+            onDoubleClick={event => event.stopPropagation()}
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+              editor.lockArea(area.id, !area.locked);
+            }}
           >
-            {area.locked ? "●" : "○"}
+            <span className="spagbol-canvas-area-lock-icon" aria-hidden="true" />
           </button>
           <button
+            type="button"
+            className="spagbol-canvas-area-compact"
+            aria-pressed={area.collapsed === true}
             title={area.collapsed ? "Expand area" : "Collapse area"}
             aria-label={area.collapsed ? "Expand area" : "Collapse area"}
             disabled={!editor.editing}
@@ -518,9 +532,9 @@ function SpagbolCanvasInner({
     new Map<string, { width: number; height: number }>(),
   );
   const [measurementRevision, setMeasurementRevision] = useState(0);
-  const [zoom, setZoom] = useState(props.defaultViewport?.zoom ?? 1);
+  const [zoom, setZoom] = useState(props.defaultViewport?.zoom ?? SPAGBOL_ZOOM_BASELINE);
   const [settledViewport, setSettledViewport] = useState<Viewport>(
-    props.defaultViewport ?? { x: 0, y: 0, zoom: 1 },
+    props.defaultViewport ?? defaultGraphViewport,
   );
   const [editorSize, setEditorSize] = useState({ width: 0, height: 0 });
   const viewportMoving = useRef(false);
@@ -547,6 +561,9 @@ function SpagbolCanvasInner({
   );
   const [picker, setPicker] = useState<Picker | null>(null);
   const [search, setSearch] = useState("");
+  const [pickerIndex, setPickerIndex] = useState(0);
+  const pickerListId = useId();
+  const pickerList = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [drawing, setDrawing] = useState<{
     start: Point;
@@ -1207,6 +1224,11 @@ function SpagbolCanvasInner({
     if (positions.length && nodeDrag.current) {
       const next = previewNodePositions(nodeDrag.current, positions);
       if (next !== nodeDrag.current) nodeDrag.current = next;
+      // This is a controlled React Flow: recording positions in a ref does not
+      // update native geometry. Publish only the transient node presentation;
+      // the graph, validation and history still change once, on drop.
+      const state = flowStore.getState();
+      state.setNodes(applyNodeChanges(positions, state.nodes));
       return;
     }
     if (positions.length)
@@ -1239,6 +1261,7 @@ function SpagbolCanvasInner({
     if (!editor.editing) return;
     const bounds = root.current?.getBoundingClientRect();
     setSearch("");
+    setPickerIndex(0);
     setPicker({
       point: flow.screenToFlowPosition(client),
       screen: {
@@ -1439,7 +1462,7 @@ function SpagbolCanvasInner({
     }
     if (command && key === "0") {
       event.preventDefault();
-      void flow.zoomTo(1);
+      void flow.zoomTo(SPAGBOL_ZOOM_BASELINE);
       return;
     }
     if (key === "delete" || key === "backspace") {
@@ -1487,13 +1510,18 @@ function SpagbolCanvasInner({
     const touch = event.changedTouches[0];
     return touch ? { x: touch.clientX, y: touch.clientY } : undefined;
   }
-  const availableNodes = [...editor.nodes.list().filter(definition => !props.nodeKinds || props.nodeKinds.includes(definition.kind)), ...(features.areas && !picker?.origin && !picker?.linkId ? [{ kind: 'spagbol.area', label: 'Area', createData: () => ({}), ports: () => [] } as import('../core/index.js').NodeDefinition] : [])]
+  const availableNodes = [...editor.nodes.list().filter(definition => !props.nodeKinds || props.nodeKinds.includes(definition.kind)), ...(features.areas && !picker?.origin && !picker?.linkId ? [{ kind: 'spagbol.area', label: 'Container', createData: () => ({}), ports: () => [] } as import('../core/index.js').NodeDefinition] : [])]
     .filter(definition => snapshot.path.length > 0 || ![spagbolGroupKinds.inputs, spagbolGroupKinds.outputs].includes(definition.kind as typeof spagbolGroupKinds.inputs))
     .filter((definition) =>
       `${definition.label} ${definition.category ?? ""} ${definition.keywords?.join(" ") ?? ""}`
         .toLowerCase()
         .includes(search.toLowerCase()),
     );
+  const selectedPickerIndex = Math.min(pickerIndex, Math.max(0, availableNodes.length - 1));
+  const selectedPickerNode = availableNodes[selectedPickerIndex];
+  useEffect(() => {
+    if (picker) pickerList.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [picker, selectedPickerIndex, search]);
 
   return (
     <GraphContext.Provider value={context}>
@@ -1503,7 +1531,7 @@ function SpagbolCanvasInner({
         style={
           {
             ...props.style,
-            "--spagbol-title-scale": zoom < 0.3 ? 1.75 : zoom < 0.5 ? 1.3 : 1,
+            "--spagbol-title-scale": spagbolHeaderTitleScale(zoom),
             "--spagbol-canvas-height": `${editorSize.height}px`,
           } as CSSProperties
         }
@@ -1779,7 +1807,7 @@ function SpagbolCanvasInner({
             stroke: editor.modes.get(activeMode)?.color,
             strokeWidth: 2,
           }}
-          defaultViewport={props.defaultViewport}
+          defaultViewport={props.defaultViewport ?? defaultGraphViewport}
           onInit={instance => props.onInit?.(instance as unknown as ReactFlowInstance)}
           onMoveStart={() => {
             viewportMoving.current = true;
@@ -1841,7 +1869,9 @@ function SpagbolCanvasInner({
             onPointerDown={(event) => event.stopPropagation()}
           >
             <div className="spagbol-canvas-picker-heading">
-              {picker.linkId ? "insert a node" : "add a node"}
+              <span className="spagbol-canvas-picker-title">
+                {picker.linkId ? "Insert a node" : "Add a node"}
+              </span>
               <button
                 aria-label="Cancel node creation"
                 onClick={() => setPicker(null)}
@@ -1852,20 +1882,46 @@ function SpagbolCanvasInner({
             <input
               autoFocus
               aria-label="Search node types"
+              role="combobox"
+              aria-expanded="true"
+              aria-autocomplete="list"
+              aria-controls={pickerListId}
+              aria-activedescendant={selectedPickerNode ? `${pickerListId}-${selectedPickerIndex}` : undefined}
               placeholder="Search nodes…"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPickerIndex(0);
+              }}
               onKeyDown={(event) => {
                 event.stopPropagation();
-                if (event.key === "Escape") setPicker(null);
-                if (event.key === "Enter" && availableNodes[0])
-                  chooseNode(availableNodes[0].kind);
+                if (event.nativeEvent.isComposing) return;
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setPickerIndex(Math.min(selectedPickerIndex + 1, Math.max(0, availableNodes.length - 1)));
+                } else if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setPickerIndex(Math.max(0, selectedPickerIndex - 1));
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  setPicker(null);
+                } else if (event.key === "Enter") {
+                  event.preventDefault();
+                  if (selectedPickerNode) chooseNode(selectedPickerNode.kind);
+                }
               }}
             />
-            <div className="spagbol-canvas-picker-list">
-              {availableNodes.map((definition) => (
+            <div ref={pickerList} id={pickerListId} className="spagbol-canvas-picker-list nowheel" role="listbox" aria-label="Node types">
+              {availableNodes.map((definition, index) => (
                 <button
                   key={definition.kind}
+                  id={`${pickerListId}-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === selectedPickerIndex}
+                  tabIndex={-1}
+                  onPointerMove={() => setPickerIndex(index)}
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={() => chooseNode(definition.kind)}
                 >
                   <span>{definition.label}</span>

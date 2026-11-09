@@ -205,6 +205,24 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
         <span className="spagbol-node-frame-title">
           {props.title ?? <SpagbolNodeFrameTypePicker node={node} compact={!!compact} selected={selected} disabled={projected || props.readOnly || !editor.editing} />}
         </span>
+        {!projected && node.graph && features.nestedGraphs && (
+          <button
+            className="spagbol-node-frame-header-button spagbol-node-frame-enter nodrag nopan"
+            type="button"
+            onPointerDown={event => event.stopPropagation()}
+            onDoubleClick={event => event.stopPropagation()}
+            aria-label="Enter nested graph"
+            title="Enter nested graph"
+            onClick={(event) => {
+              event.stopPropagation();
+              editor.enter(node.id);
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        )}
         {!projected && <button className="spagbol-node-frame-enabled" type="button" aria-label={node.enabled === false ? 'Enable node' : 'Disable node'} title={node.enabled === false ? 'Enable node' : 'Disable node'} aria-pressed={node.enabled !== false} disabled={!editor.editing || props.readOnly} onPointerDown={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()} onClick={event => { event.preventDefault(); event.stopPropagation(); editor.updateNode(node.id, { enabled: node.enabled === false }, 'structure'); }}><span className="spagbol-node-frame-enabled-icon" aria-hidden="true" /></button>}
         {!projected && features.compact && !props.forceCompact && view?.compact !== false && (
           <button
@@ -218,19 +236,6 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
             }}
           >
             {node.compact ? "+" : "−"}
-          </button>
-        )}
-        {!projected && node.graph && features.nestedGraphs && (
-          <button
-            className="spagbol-node-frame-header-button nodrag nopan"
-            aria-label="Enter nested graph"
-            title="Enter nested graph"
-            onClick={(event) => {
-              event.stopPropagation();
-              editor.enter(node.id);
-            }}
-          >
-            ↳
           </button>
         )}
       </div>

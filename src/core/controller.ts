@@ -773,9 +773,9 @@ export class GraphEditor {
   convertNodeToArea(nodeId: string): string | undefined {
     if (!this.editing || !this.graph.nodes.some(node => node.id === nodeId)) return;
     const id = createId('area');
-    this.edit('Convert node to area', 'structure', graph => {
+    this.edit('Convert node to Container', 'structure', graph => {
       const node = graph.nodes.find(node => node.id === nodeId)!;
-      graph.areas.push({ id, title: node.label ?? 'Area', position: { ...node.position }, size: node.size ?? { width: 420, height: 280 } });
+      graph.areas.push({ id, title: node.label ?? 'Container', position: { ...node.position }, size: node.size ?? { width: 420, height: 280 } });
       removeNodes(graph, [nodeId]);
     });
     this.select({ areaIds: [id] });
@@ -787,10 +787,10 @@ export class GraphEditor {
   ): string | undefined {
     if (!this.editing) return;
     const id = createId("area");
-    this.edit("Add area", "layout", (graph) => {
+    this.edit("Add Container", "layout", (graph) => {
       graph.areas.push({
         id,
-        title: "Area",
+        title: "Container",
         position: { ...position },
         size: { ...size },
       });

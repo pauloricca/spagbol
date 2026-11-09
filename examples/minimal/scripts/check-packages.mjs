@@ -9,6 +9,9 @@ for (const name of [
   "SpagbolCanvasMenu",
   "SpagbolControlSlider",
   "SpagbolControlButton",
+  "SpagbolCurveEditor",
+  "SpagbolSequencer",
+  "SpagbolControlJoystick",
 ])
   assert.equal(typeof spagbol[name], "function");
 assert.equal(typeof globalThis.window, "undefined");

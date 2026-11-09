@@ -4,11 +4,15 @@ An extensible graph editor extracted from the interaction patterns in Teia and v
 
 Spagbol owns graph editing and presentation. Consumers own their node catalogues, node bodies, execution, persistence services, assets and runtime observations. There is no audio engine, shader compiler, MIDI access or server client in the package.
 
+## Recommended node vocabulary
+
+Spagbol applications use numeric signal connections while retaining their own catalogues and execution engines. The [standard-node proposal](docs/language/standard-nodes.md), [26 baseline contracts](docs/language/standard-node-contracts.md), and [Teia / Visual Visual comparison](docs/language/standard-node-comparison.md) document recommended semantics, defaults, edge cases and conformance examples. Envelope, Playhead and Time remain app-specific. These are draft conventions, not installed node definitions or runtime enforcement; the current editor API still permits consumer-defined port metadata and link modes. Controlled Curve, Sequencer and Joystick UI is available; apps own data models, storage and execution. See [component contracts and Teia adapters](docs/language/ui-components.md).
+
 ## Package
 
 `@pauloricca/spagbol` contains the complete graph model, registries, atomic edits, undo/redo, graph transformations, nesting, areas, observations and codecs together with the extensible React canvas, node frames/ports and controls. All public model and UI symbols come from the same entry point. Import `@pauloricca/spagbol/styles.css` explicitly.
 
-The package is version `0.1.1`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
+The package is version `0.1.3`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
 
 ## Docker development
 
@@ -150,6 +154,12 @@ The slider accepts normalized values from 0 to 1 and an optional external `displ
 
 Buttons support `toggle`, `trigger` and `temporary` modes. Toggle changes the pressed value on click; temporary emits 1 on press and 0 on release, cancellation or lost capture; trigger calls `onClickPulse` on press with a 120ms visual flash. External pressed-value rises also flash in trigger mode. Callbacks are controlled by the host: these components do not implement graph execution, MIDI, signal mapping or DSP timing. Consumers decide how values enter their model/history and how read-only UI is enforced.
 
+## Curve, Sequencer and Joystick UI
+
+`SpagbolCurveEditor`, `SpagbolSequencer` and `SpagbolControlJoystick` are controlled components extracted from Teia. They render view projections and emit edit intents; consumers own data models, normalization, persistence, undo, MIDI and execution. Teia uses them for Custom Wave, Sequencer, Roll and Joystick while retaining its existing models and musical controls. No shared curve/sequence schema or runtime is introduced.
+
+Import them from `@pauloricca/spagbol`. Their CSS is included in `styles.css`, or import `@pauloricca/spagbol/editors.css` independently. Read the [component props, interaction contracts and adapter examples](docs/language/ui-components.md). Curve supports bank/background previews and chrome slots; Sequencer supports painting, moving/resizing intervals and levels with custom row chrome; Joystick supports normalized XY dragging and optional elastic return.
+
 ## Rich links
 
 Standard descriptors are `set`, `add`, `multiply` and `bend`, with mode colours, labels, descriptions and shortcuts. Register more with `LinkModeRegistry`, and optionally constrain the offered modes using `policy.modes`. A descriptor does not implement execution: consumers supply their own arithmetic/compiler and capability policy.
@@ -169,7 +179,19 @@ To disable strength connections, supply `policy: { linkProperties: [] }`; `featu
 
 Supply optional `linkPresentation` classifications for feedback/control/virtual drawing. Self links get the feedback geometry automatically. Virtual relations are display-only. Standard connected links support weights, enabling/disabling, mode editing, endpoint reconnection and insertion.
 
+## Add-node picker
+
+Double-click empty canvas to open the picker. Its heading uses the same spacing, typography and colours as a node header. The first filtered result is selected automatically; Up/Down moves the highlight while focus stays in the search field, and Enter creates the highlighted node. Typing a new query resets selection to the first result; Escape cancels. The selected result scrolls into view, and pointer movement/clicks select/create items too. With no matches, Enter does nothing. Inserting a node into a link uses the same picker.
+
+Node pins are 8px squares centred on the node edge (`--spagbol-pin-size` controls the size). Selecting a link turns its endpoint pins green without changing their size or shape.
+
 ## Canvas controls
+
+Checked menu items use the header colours (white fill/black text by default), without a tick icon or reserved checkmark column. They retain `menuitemcheckbox` roles and `aria-checked`; direct toggle actions retain `aria-pressed`. Host-owned buttons such as Teia’s SAVE/PLAY/REC keep their own state colours.
+
+
+Zoom follows Teia’s scale: **100% is a raw viewport zoom of `0.5`** (`0.25` displays 50%, `1` displays 200%). The percentage button and Cmd/Ctrl+0 reset to `0.5`; header detail thresholds use this same baseline. Saved viewport values and graph/node coordinates remain raw values, so existing layouts need no conversion. Hosts passing `defaultViewport` should use `zoom: 0.5` for 100%. Fit-to-view still chooses the scale needed to fit the graph.
+
 
 The default canvas includes a bottom-left zoom stack (in, out, fit), a percentage button that resets zoom to 100%, and bottom-right undo/redo buttons with a **MORE** menu containing the layout lock. Nested graphs also get an exit button and breadcrumbs. These controls use the shared theme and work without app callbacks.
 
@@ -216,7 +238,7 @@ The complete canvas enables areas, compact nodes, nesting and projected group co
 />
 ```
 
-- **Areas:** create, move, resize, title, collapse, clone and freeze membership. Unlocked membership follows top-left containment; locking snapshots node/nested-area membership. A `controlHeight` section stays visible on collapse. Hidden member links are projected to the area's header; internal links are hidden.
+- **Areas (Container, Spread, Spawn and Conditional Execution):** Container is the plain visual kind; execution kinds are supplied by the host. Create, move, resize, title, collapse, clone and freeze membership. Unlocked membership follows top-left containment; locking snapshots node/nested-area membership. A `controlHeight` section stays visible on collapse. Hidden member links are projected to the area's header; internal links are hidden.
 - **Nested graphs:** nodes may own `graph`; navigate through the header arrow and breadcrumb bar. `groupSelection()` uses Spagbol-owned Group, Ins and Outs kinds (`spagbolGroupKinds`), preserving original mode/strength at the destination. Existing custom boundary-kind options remain compatible. Spagbol does not flatten or execute groups.
 - **Shared structure:** an explicit `sharedGraphId` synchronizes edited nested graph contents across linked instances. Each instance retains its own overrides. Cloning an already linked group retains that relationship; nodes without a shared ID remain independent.
 - **Projected panels:** `panelNodeIds` selects nested controls; `overrides` stores instance values independently of shared defaults. `panels` requires `nestedGraphs`. A custom projected/body renderer receives `setValue` mapped to the parent override. Double-click a projected control label to reset it. Numeric and JSON payload overrides are instance-specific, including nested projected controls; double-click the projected header to reset them. UI/Controls areas determine the projected layout, matching Teia.
@@ -241,7 +263,7 @@ The complete canvas enables areas, compact nodes, nesting and projected group co
 | Delete or Backspace                        | Delete selection and dependent modulation links. Deleting an area leaves its nodes.                                                                              |
 | Cmd/Ctrl+Z; Cmd/Ctrl+Shift+Z or Y          | Undo; redo.                                                                                                                                                      |
 | X                                          | Toggle selected nodes, otherwise selected links.                                                                                                                 |
-| Cmd/Ctrl-drag empty canvas                 | Draw an area when enabled.                                                                                                                                       |
+| Cmd/Ctrl-drag empty canvas                 | Draw a Container when enabled.                                                                                                                                       |
 | Double-click selected node name / area title | Change node type inline / edit the area title.                                                                                                                                            |
 | Drag numeric field / click                 | Scrub / type a value. Shift is finer; Cmd/Ctrl is coarser.                                                                                                       |
 | Shift/Alt-wheel on number                  | Scrub without panning.                                                                                                                                           |
@@ -337,3 +359,11 @@ Ordinary node movement is presented as transient canvas geometry. The immutable 
 ## 0.1.1
 
 Node dragging now previews native canvas positions and commits one document edit on drop. This removes per-pointer graph cloning, validation and redundant controlled-position updates. Selection subscriptions are scoped to the affected node, port or cable. Sliders and numeric controls retain live value updates and grouped undo. Escape, pointer cancellation, multi-selection and Alt duplication are covered by regression checks. See [the performance investigation](docs/node-drag-performance.md) for measurements and behavior details.
+
+## Area kinds, headers and membership controls
+
+Areas use Teia’s bold title, 32px aligned header, subtle background and dashed white selection outline. The padlock freezes membership: locked areas retain their saved nodes/nested areas; unlocked areas follow containment as content moves. The padlock is a membership control, and does not disable nodes or audio processing. Its pressed/closed state means locked. The +/− button collapses/expands the area.
+
+Areas are the umbrella for **Container**, **Spread**, **Spawn** and **Conditional Execution**. Container only organises the graph visually; the other three are execution areas with app-owned semantics. Group is a separate nested graph. The creation/type picker calls the visual kind Container, and new or cleared default titles use Container. The compatible `GraphArea`, `areas`, `ownerNodeId`, `spagbol.area` and `GraphEditor.addArea()`/`convertNodeToArea()` names stay unchanged; existing saved/custom titles are not rewritten. See [area terminology](docs/language/standard-nodes.md#areas-and-their-kinds).
+
+Version 0.1.3 includes live node-drag previews, labeled group breadcrumbs and a larger chevron navigation target, alongside the shared Curve, Sequencer and Joystick controls.

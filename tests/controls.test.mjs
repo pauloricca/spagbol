@@ -108,6 +108,7 @@ test("consumer actions and checked menu items render through the public canvas A
     html,
     /role="menuitemcheckbox" aria-label="Dark theme"[^>]*aria-checked="true"/,
   );
+  assert.doesNotMatch(html, /spagbol-canvas-menu-check|✓/);
   assert.doesNotMatch(html, /aria-label="Undo"/);
   assert.doesNotMatch(html, /aria-label="Lock UI"/);
 });

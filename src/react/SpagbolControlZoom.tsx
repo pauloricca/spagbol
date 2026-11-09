@@ -1,3 +1,4 @@
+import { SPAGBOL_ZOOM_BASELINE, spagbolZoomPercentage } from "./zoom.js";
 import { ControlButton, Controls, useReactFlow } from "@xyflow/react";
 import type { ReactNode } from "react";
 
@@ -17,10 +18,10 @@ export function SpagbolControlZoom({
   layout = "flow",
 }: SpagbolControlZoomProps) {
   const flow = useReactFlow();
-  const percentage = `${Math.round(zoom * 100)}%`;
+  const percentage = spagbolZoomPercentage(zoom);
   const reset = () => {
     if (onReset) onReset();
-    else void flow.zoomTo(1);
+    else void flow.zoomTo(SPAGBOL_ZOOM_BASELINE);
   };
   const label = `Reset zoom to 100% (currently ${percentage})`;
   if (layout === "flow")

@@ -300,6 +300,32 @@ test("area locks snapshot membership; later arrivals remain independent", () => 
   });
   assert.ok(!areaMembers(editor.graph, area).nodeIds.has(c));
 });
+test("unlocking an area restores containment and undo restores the membership snapshot without disabling content", () => {
+  const { editor, a, b } = setup();
+  const areaId = editor.addArea({ x: -10, y: -10 }, { width: 250, height: 150 });
+  editor.lockArea(areaId, true);
+  editor.updateNode(b, { position: { x: 20, y: 20 } }, "layout");
+  const enabled = editor.graph.nodes.map(node => node.enabled);
+  const links = editor.graph.links;
+  assert.ok(areaMembers(editor.graph, areaId).nodeIds.has(a));
+  assert.ok(!areaMembers(editor.graph, areaId).nodeIds.has(b));
+
+  editor.lockArea(areaId, false);
+  const area = editor.graph.areas.find(area => area.id === areaId);
+  assert.equal(area.locked, false);
+  assert.equal(area.nodeIds, undefined);
+  assert.equal(area.areaIds, undefined);
+  assert.ok(areaMembers(editor.graph, areaId).nodeIds.has(b));
+  assert.deepEqual(editor.graph.nodes.map(node => node.enabled), enabled);
+  assert.deepEqual(editor.graph.links, links);
+
+  editor.undo();
+  assert.equal(editor.graph.areas.find(area => area.id === areaId).locked, true);
+  assert.ok(!areaMembers(editor.graph, areaId).nodeIds.has(b));
+  editor.redo();
+  assert.ok(areaMembers(editor.graph, areaId).nodeIds.has(b));
+});
+
 test("nested edits synchronize linked structure, retain independent instance overrides", () => {
   const { editor } = setup();
   const inner = emptyGraph();

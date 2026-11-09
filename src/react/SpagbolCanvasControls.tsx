@@ -1,5 +1,5 @@
 import { useReactFlow } from "@xyflow/react";
-import { isGroupBoundary } from "../core/index.js";
+import { graphAt, isGroupBoundary } from "../core/index.js";
 import { useRef, useState, type ReactNode } from "react";
 import { SpagbolControlZoom } from "./SpagbolControlZoom.js";
 import { SpagbolCanvasMenu } from "./SpagbolCanvasMenu.js";
@@ -154,11 +154,6 @@ export function SpagbolCanvasActions(options: SpagbolCanvasControlsOptions) {
           void invoke(action, fromMenu);
         }}
       >
-        {action.checked !== undefined && fromMenu ? (
-          <span className="spagbol-canvas-menu-check" aria-hidden="true">
-            {action.checked ? "✓" : ""}
-          </span>
-        ) : null}
         {action.label}
       </button>
     );
@@ -237,7 +232,7 @@ export function SpagbolCanvasControls(options: SpagbolCanvasControlsOptions) {
               }
               onClick={() => editor.navigate(snapshot.path.slice(0, index + 1))}
             >
-              {id}
+              {graphAt(snapshot.document, snapshot.path.slice(0, index)).nodes.find(node => node.id === id)?.label?.trim() || 'Group'}
             </button>
           ))}
         </nav>

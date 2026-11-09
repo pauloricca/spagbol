@@ -59,3 +59,7 @@ export {
   type SpagbolCanvasMenuItem,
   type SpagbolCanvasMenuSeparator,
 } from "./SpagbolCanvasControls.js";
+
+export { SpagbolCurveEditor, type SpagbolCurveEditorProps, type SpagbolCurveEditorPoint } from "./SpagbolCurveEditor.js";
+export { SpagbolSequencer, type SpagbolSequencerProps, type SpagbolSequencerItem } from "./SpagbolSequencer.js";
+export { SpagbolControlJoystick, type SpagbolControlJoystickProps } from "./SpagbolControlJoystick.js";
