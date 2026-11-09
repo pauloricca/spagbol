@@ -1,3 +1,4 @@
+import { previewNodePositions, applyNodePositions } from "./nodeDrag.js";
 import { createPortal } from "react-dom";
 import { SpagbolCanvasLinkControls } from "./SpagbolCanvasLinkControls.js";
 import { SpagbolCanvasFlow } from "./SpagbolCanvasFlow.js";
@@ -146,6 +147,7 @@ export interface SpagbolCanvasProps extends SpagbolCanvasSlots {
   controls?: SpagbolCanvasControlsOptions | false;
   ariaLabel?: string;
 }
+const emptyFlowNodes: FlowNode[] = [];
 const emptyViews: Readonly<Record<string, SpagbolNodeView>> = Object.freeze({});
 const emptyPresentations: Readonly<Record<string, SpagbolLinkPresentation>> =
   Object.freeze({});
@@ -404,8 +406,8 @@ const SpagbolCanvasLink = memo(function SpagbolCanvasLink(props: EdgeProps<FlowL
   const flow = useReactFlow();
   const viewport = useViewport();
   const [controlsVisible, setControlsVisible] = useState(false);
-  const selection = useEditorSelector(editor, snapshot => snapshot.selection);
-  const showControls = props.selected && selection.linkIds.length === 1 && editor.editing && !connecting && !props.data?.virtual;
+  const selectedLinkId = useEditorSelector(editor, snapshot => snapshot.selection.linkIds.length === 1 ? snapshot.selection.linkIds[0] : undefined);
+  const showControls = props.selected && selectedLinkId === props.id && editor.editing && !connecting && !props.data?.virtual;
   useEffect(() => {
     if (!showControls) { setControlsVisible(false); return; }
     const timer = window.setTimeout(() => setControlsVisible(true), 260);
@@ -507,7 +509,9 @@ function SpagbolCanvasInner({
   const flow = useReactFlow<FlowNode, FlowLink>();
   const flowStore = useStoreApi();
   const nodesInitialized = useNodesInitialized();
-  const flowNodes = useStore((state) => state.nodes);
+  // Only cable-property anchors need live native geometry. Subscribing to every
+  // position change otherwise causes redundant full-canvas renders during drags.
+  const flowNodes = useStore((state) => features.linkProperties ? state.nodes : emptyFlowNodes);
   // Measurements are canvas state, not saved graph data. Retaining them keeps
   // React Flow from hiding/reinitializing every node on each drag preview frame.
   const measuredSizes = useRef(
@@ -559,10 +563,25 @@ function SpagbolCanvasInner({
   const duplicate = useRef<DuplicateDrag | null>(null);
   const [duplicatePreview, setDuplicatePreview] =
     useState<DuplicateDrag | null>(null);
-  const cancelledDuplicate = useRef(false);
+  const cancelledNodeDrag = useRef(false);
+  // Position previews belong to the canvas, not the persistent document. A drag
+  // commits once, avoiding whole-document edits/validation on every pointer move.
+  const nodeDrag = useRef<ReadonlyMap<string, Point> | null>(null);
+  const [positionRevision, setPositionRevision] = useState(0);
+  const clearNodeDrag = () => {
+    nodeDrag.current = null;
+    // Force a controlled refresh on cancellation, even though the saved position
+    // never changed: React Flow currently holds the transient pointer position.
+    setPositionRevision(value => value + 1);
+  };
+
   useEffect(() => {
+    if (!snapshot.gesture && nodeDrag.current) {
+      cancelledNodeDrag.current = true;
+      clearNodeDrag();
+    }
     if (!snapshot.gesture && duplicate.current) {
-      cancelledDuplicate.current = true;
+      cancelledNodeDrag.current = true;
       duplicate.current = null;
       setDuplicatePreview(null);
     }
@@ -612,7 +631,7 @@ function SpagbolCanvasInner({
     if (phase === 'start') {
       const area = editor.graph.areas.find(area => area.id === id);
       if (!area) return;
-      cancelledDuplicate.current = false;
+      cancelledNodeDrag.current = false;
       const fragment = copyFragment(editor.graph, [], [id]);
       duplicate.current = { namespace: createId('preview'), fragment, nodeId: '', origin: area.position, positions: new Map(fragment.nodes.map(node => [node.id, node.position])), areaPositions: new Map(fragment.areas.map(area => [area.id, area.position])), external };
       setDuplicatePreview(duplicate.current);
@@ -723,7 +742,7 @@ function SpagbolCanvasInner({
         (node): FlowNode => ({
           id: nodeFlowId(node.id),
           type: "spagbolNode",
-          position: node.position,
+          position: nodeDrag.current?.get(node.id) ?? node.position,
           selected: snapshot.selection.nodeIds.includes(node.id),
           hidden: collapsed.nodes.has(node.id),
           draggable:
@@ -742,6 +761,7 @@ function SpagbolCanvasInner({
           deletable: false,
           dragHandle: ".spagbol-canvas-drag-handle",
           data: {
+            positionRevision,
             node: duplicatePresentation?.originalNodes.get(node.id) ?? node,
             projected: collapsed.projected.has(node.id),
             stationaryOriginal: duplicatePresentation?.originalNodes.has(
@@ -770,6 +790,7 @@ function SpagbolCanvasInner({
     ],
     [
       renderGraph,
+      positionRevision,
       duplicatePresentation,
       snapshot.selection,
       snapshot.mode,
@@ -836,6 +857,7 @@ function SpagbolCanvasInner({
     collapsed,
     flow,
     measurementKey,
+    measurementRevision,
     settledViewport.zoom,
     editorSize,
     props.panBounds,
@@ -1181,7 +1203,12 @@ function SpagbolCanvasInner({
       setDuplicatePreview(next);
       return;
     }
-    if (cancelledDuplicate.current) return;
+    if (cancelledNodeDrag.current) return;
+    if (positions.length && nodeDrag.current) {
+      const next = previewNodePositions(nodeDrag.current, positions);
+      if (next !== nodeDrag.current) nodeDrag.current = next;
+      return;
+    }
     if (positions.length)
       editor.edit("Move nodes", "layout", (graph) => {
         for (const change of positions)
@@ -1362,7 +1389,8 @@ function SpagbolCanvasInner({
     const command = event.metaKey || event.ctrlKey,
       key = event.key.toLowerCase();
     if (key === "escape") {
-      if (duplicate.current) cancelledDuplicate.current = true;
+      if (duplicate.current || nodeDrag.current) cancelledNodeDrag.current = true;
+      if (nodeDrag.current) clearNodeDrag();
       duplicate.current = null;
       setDuplicatePreview(null);
       editor.cancelGesture();
@@ -1539,7 +1567,8 @@ function SpagbolCanvasInner({
             event.currentTarget.releasePointerCapture(event.pointerId);
         }}
         onPointerCancel={() => {
-          if (duplicate.current) cancelledDuplicate.current = true;
+          if (duplicate.current || nodeDrag.current) cancelledNodeDrag.current = true;
+          if (nodeDrag.current) clearNodeDrag();
           duplicate.current = null;
           setDuplicatePreview(null);
           setDrawing(null);
@@ -1569,10 +1598,11 @@ function SpagbolCanvasInner({
           }}
           onNodeDragStart={(event, node) => {
             if (!node.data.node) return;
-            cancelledDuplicate.current = false;
+            cancelledNodeDrag.current = false;
             editor.beginGesture(
               event.altKey ? "Duplicate nodes" : "Move nodes",
             );
+            if (!event.altKey) nodeDrag.current = new Map();
             if (event.altKey) {
               const selection = editor.getSnapshot().selection;
               const ids = selection.nodeIds.includes(node.data.node.id)
@@ -1594,11 +1624,13 @@ function SpagbolCanvasInner({
             }
           }}
           onNodeDragStop={(_event, node) => {
+            const positions = nodeDrag.current;
+            if (positions) clearNodeDrag();
             const current = duplicate.current;
             duplicate.current = null;
             setDuplicatePreview(null);
-            if (cancelledDuplicate.current) {
-              cancelledDuplicate.current = false;
+            if (cancelledNodeDrag.current) {
+              cancelledNodeDrag.current = false;
               editor.cancelGesture();
               editor.select(editor.getSnapshot().selection);
               return;
@@ -1620,6 +1652,8 @@ function SpagbolCanvasInner({
                 return;
               }
             }
+            if (positions?.size)
+              editor.edit("Move nodes", "layout", graph => applyNodePositions(graph, positions));
             editor.commitGesture();
           }}
           onConnectStart={(_event, params) => {

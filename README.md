@@ -1,6 +1,6 @@
 # Spagbol
 
-An extensible graph editor extracted from the interaction patterns in Teia and visual-visual. This repository is independent of both applications. Teia now consumes the complete shared canvas/controller through a patch codec and domain bindings; visual-visual remains unchanged.
+An extensible graph editor extracted from the interaction patterns in Teia and visual-visual. This repository is independent of both applications. Teia now consumes the complete shared canvas/controller through a patch codec and domain bindings; Visual Visual consumes the shared canvas/controller through its shader patch codec and domain bindings.
 
 Spagbol owns graph editing and presentation. Consumers own their node catalogues, node bodies, execution, persistence services, assets and runtime observations. There is no audio engine, shader compiler, MIDI access or server client in the package.
 
@@ -8,7 +8,7 @@ Spagbol owns graph editing and presentation. Consumers own their node catalogues
 
 `@pauloricca/spagbol` contains the complete graph model, registries, atomic edits, undo/redo, graph transformations, nesting, areas, observations and codecs together with the extensible React canvas, node frames/ports and controls. All public model and UI symbols come from the same entry point. Import `@pauloricca/spagbol/styles.css` explicitly.
 
-The package is version `0.1.0`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
+The package is version `0.1.1`, licensed under [MIT](LICENSE). React/React DOM 19 and React Flow 12.11 are peer dependencies. Source remains organised into internal `src/core` and `src/react` modules, with a single build, version and tarball. This is an initial implementation, not a claim of complete Teia interaction parity.
 
 ## Docker development
 
@@ -329,3 +329,11 @@ npm install @pauloricca/spagbol @xyflow/react react react-dom
 Import `@pauloricca/spagbol/styles.css` once and mount `SpagbolCanvas` in a sized container, as above. Applications should declare the released npm version in their manifest and commit the registry-backed lockfile. The bundled example intentionally uses a local tarball so edits can be tested before a release.
 
 For updates, change the version first (for example `npm version patch --no-git-tag-version`), rerun the checks and dry run, then publish again. Commit the manifest/lockfile through your normal release workflow. Published name/version pairs cannot be reused. Local example preparation reads the package version to select its tarball. See [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
+
+## Node drag previews
+
+Ordinary node movement is presented as transient canvas geometry. The immutable editor document keeps its previous positions until drop, when all moved nodes are committed as one layout edit and one undo entry. Escape, pointer cancellation, or controller cancellation discards the preview. Numeric controls still publish live value previews through the controller's gesture API. Hosts observing document changes should expect a layout change at drop rather than on each pointer movement.
+
+## 0.1.1
+
+Node dragging now previews native canvas positions and commits one document edit on drop. This removes per-pointer graph cloning, validation and redundant controlled-position updates. Selection subscriptions are scoped to the affected node, port or cable. Sliders and numeric controls retain live value updates and grouped undo. Escape, pointer cancellation, multi-selection and Alt duplication are covered by regression checks. See [the performance investigation](docs/node-drag-performance.md) for measurements and behavior details.

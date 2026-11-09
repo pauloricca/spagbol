@@ -253,3 +253,30 @@ test('unchanged native flow nodes and cables survive a value edit with their ide
   const resized = reuseFlowPresentations(next, next.map(item => item.id === 'b' ? { ...item, style: { width: 300 } } : item));
   assert.notEqual(resized[1], b); assert.equal(resized[2], link);
 });
+
+
+test("ordinary node dragging previews outside the document and commits all positions once", async () => {
+  const { previewNodePositions, applyNodePositions } = await import('../dist/react/nodeDrag.js');
+  const { editor, a, b } = scene();
+  const before = editor.getSnapshot().document;
+  const commits = []; editor.onCommit(event => commits.push(event));
+  let preview = new Map(); editor.beginGesture('Move nodes');
+  for (let i = 1; i <= 120; i++) preview = previewNodePositions(preview, [
+    { type: 'position', id: `node:${a}`, position: { x: i, y: i + 20 } },
+    { type: 'position', id: `node:${b}`, position: { x: i + 300, y: i + 40 } },
+  ]);
+  assert.equal(editor.getSnapshot().document, before); assert.equal(commits.length, 0);
+  const stable = previewNodePositions(preview, [{type:'position',id:`node:${a}`,position:{x:120,y:140}}]); assert.equal(stable,preview);
+  editor.edit('Move nodes', 'layout', graph => applyNodePositions(graph, preview)); editor.commitGesture();
+  assert.equal(commits.length, 1); assert.deepEqual(editor.graph.nodes.find(n => n.id === a).position, {x:120,y:140});
+  assert.deepEqual(editor.graph.nodes.find(n => n.id === b).position, {x:420,y:160});
+  editor.undo(); assert.equal(editor.getSnapshot().document, before); editor.redo(); assert.deepEqual(editor.graph.nodes.find(n => n.id === a).position, {x:120,y:140});
+});
+test("cancelled position previews preserve redo, ignore invalid geometry and do not mutate their inputs", async () => {
+  const { previewNodePositions } = await import('../dist/react/nodeDrag.js');
+  const { editor, a } = scene(); editor.setValue(a,'in',2); editor.undo();
+  const before=editor.getSnapshot().document; editor.beginGesture('Move nodes');
+  const initial = new Map(); const preview=previewNodePositions(initial,[{type:'position',id:`node:${a}`,position:{x:25,y:30}},{type:'position',id:`node:${a}`,position:{x:NaN,y:0}},{type:'position',id:'anchor:x',position:{x:0,y:0}}]);
+  assert.equal(initial.size,0); assert.equal(preview.size,1); editor.cancelGesture();
+  assert.equal(editor.getSnapshot().document,before); assert.equal(editor.getSnapshot().canRedo,true);
+});

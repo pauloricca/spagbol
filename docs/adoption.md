@@ -6,6 +6,6 @@ Spagbol owns frames/ports, links and selected-link controls, history/selection, 
 
 Validation includes Docker compilation, shared model/control checks, and all saved Teia patch fixtures round-tripping and producing equivalent static DSP programs after a canonical graph edit. This does not establish browser/audio/native-host/hardware parity. After installing the updated packed package, exercise ordinary nodes and specialized controls; node type changes; connection/strength/reconnection; duplicate and undo; runtime containers; Group/Ins/Outs and UI-area instance controls; MIDI; persistence; hosted sessions; and FM-1 export/live editing.
 
-visual-visual remains reference-only and unchanged. No package has been published or application deployed.
+Visual Visual now consumes the shared canvas/controller through a shader patch codec and domain-specific views. Spagbol is published on npm; app deployment remains separate from package releases.
 
 Teia-specific compatibility includes display resize/scale, compact labels, area hierarchy previews and inline titles, modifier-delete bridging, Params temporary pins, per-row Sequencer ports, recorded-buffer copy callbacks and asynchronous Buffer-to-Sample conversion. These bind through shared commands/view slots/lifecycle hooks; none reintroduces a Teia canvas or second graph history. Group UI areas retain their explicit crop bounds and plain resettable headers.

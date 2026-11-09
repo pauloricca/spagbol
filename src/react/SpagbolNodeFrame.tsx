@@ -39,15 +39,16 @@ export interface SpagbolNodePortProps {
 /** Also usable in a completely custom node renderer. */
 export function SpagbolNodePort({ port, connectable = true, style, position, className }: SpagbolNodePortProps) {
   const { editor } = useSpagbol();
-  const selection = useEditorSelector(editor, snapshot => snapshot.selection);
   const mode = useEditorSelector(editor, snapshot => snapshot.mode);
   const flowId = useNodeId();
-  const selectedLink = mode === 'edit' && selection.linkIds.length === 1
-    ? editor.graph.links.find(link => link.id === selection.linkIds[0]) : undefined;
   const nodeId = flowId?.startsWith('node:') ? flowId.slice(5) : undefined;
-  const reconnecting = selectedLink && (port.direction === 'output'
-    ? selectedLink.source.nodeId === nodeId && selectedLink.source.portId === port.id
-    : selectedLink.target.type === 'port' && selectedLink.target.nodeId === nodeId && selectedLink.target.portId === port.id);
+  const reconnecting = useEditorSelector(editor, snapshot => {
+    if (snapshot.mode !== 'edit' || snapshot.selection.linkIds.length !== 1) return false;
+    const link = graphAt(snapshot.document, snapshot.path).links.find(link => link.id === snapshot.selection.linkIds[0]);
+    return !!link && (port.direction === 'output'
+      ? link.source.nodeId === nodeId && link.source.portId === port.id
+      : link.target.type === 'port' && link.target.nodeId === nodeId && link.target.portId === port.id);
+  });
   const direction = port.direction;
   return (
     <Handle
@@ -56,7 +57,7 @@ export function SpagbolNodePort({ port, connectable = true, style, position, cla
       position={position ?? (direction === "input" ? Position.Left : Position.Right)}
       className={`spagbol-node-port${reconnecting ? ' spagbol-node-port-selected-link' : ''} ${className ?? ""}`}
       isConnectable={
-        editor.editing && port.connectable !== false && connectable
+        mode === "edit" && port.connectable !== false && connectable
       }
       style={style}
       aria-label={`${port.label} ${direction}`}
@@ -85,7 +86,8 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
   const [pointerOver, setPointerOver] = useState(false);
   const updateInternals = useUpdateNodeInternals();
   const flowId = useNodeId();
-  const selection = useEditorSelector(editor, snapshot => snapshot.selection);
+  const singleSelected = useEditorSelector(editor, snapshot => snapshot.selection.nodeIds.length === 1 && snapshot.selection.nodeIds[0] === node.id);
+  const selectedPortId = useEditorSelector(editor, snapshot => snapshot.selection.port?.nodeId === node.id ? snapshot.selection.port.portId : undefined);
   const mode = useEditorSelector(editor, snapshot => snapshot.mode);
   const path = useEditorSelector(editor, snapshot => snapshot.path);
   const boundary = isGroupBoundary(node);
@@ -93,7 +95,7 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
   const ports = portsFor(node, editor.nodes);
   const inputPorts = ports.filter((port) => port.direction === "input" && props.portVisible?.(port) !== false);
   const outputPorts = ports.filter((port) => port.direction === "output" && props.portVisible?.(port) !== false);
-  const compact = !projected && views[node.kind]?.compact !== false && features.compact && (props.forceCompact || node.compact) && !(selected && selection.nodeIds.length === 1) && !(connecting && pointerOver);
+  const compact = !projected && views[node.kind]?.compact !== false && features.compact && (props.forceCompact || node.compact) && !(selected && singleSelected) && !(connecting && pointerOver);
   const headerInput = !boundary ? inputPorts.find(port => port.label === 'signal') : undefined;
   const headerOutput = !boundary && props.headerOutput !== false ? outputPorts.find(port => port.label === 'signal') ?? (outputPorts.length === 1 ? outputPorts[0] : undefined) : undefined;
   const portState = useEditorSelector(editor, snapshot => graphPortStates(graphAt(snapshot.document, snapshot.path)).get(node.id) ?? emptyPortState);
@@ -140,7 +142,7 @@ export function SpagbolNodeFrame(props: SpagbolNodeFrameProps) {
         style={{ gridColumn: boundary || input || inputPorts.length === 0 ? 1 : 2, gridRow: index + 1 + (props.portsHeader ? 1 : 0) }}
       >
         {!projected && !props.hidePorts && <SpagbolNodePort port={port} />}
-        {props.renderPortContent ? props.renderPortContent(port) : <>{boundary && !projected ? <SpagbolNodeGroupPort name={port.label} editable={editor.editing && !props.readOnly} draggable={editor.editing && !props.readOnly} selected={selection.port?.nodeId === node.id && selection.port.portId === port.id} onChange={label => { try { editor.renameBoundaryPort(node.id, port.id, label); } catch { /* Keep the valid label. */ } }} onPointerDown={event => {
+        {props.renderPortContent ? props.renderPortContent(port) : <>{boundary && !projected ? <SpagbolNodeGroupPort name={port.label} editable={editor.editing && !props.readOnly} draggable={editor.editing && !props.readOnly} selected={selectedPortId === port.id} onChange={label => { try { editor.renameBoundaryPort(node.id, port.id, label); } catch { /* Keep the valid label. */ } }} onPointerDown={event => {
           if (!editor.editing || props.readOnly || event.button !== 0) return;
           event.preventDefault(); event.stopPropagation();
           editor.select({ nodeIds: [node.id], port: { nodeId: node.id, portId: port.id, direction: port.direction } });
@@ -274,7 +276,6 @@ export function useNodeViewProps(
   const { editor, projection } = useSpagbol();
   const owner = projection?.groupId ?? groupId;
   const controlPath = projection?.path ?? [node.id];
-  const selection = useEditorSelector(editor, snapshot => snapshot.selection);
   const mode = useEditorSelector(editor, snapshot => snapshot.mode);
   const path = useEditorSelector(editor, snapshot => snapshot.path);
   return useMemo(
